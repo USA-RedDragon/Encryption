@@ -11,7 +11,8 @@ public SMS implements Comparable<SMS>{
 	if(o.date > date) return 1;
   }
   
-  public void setDate(String date) {
+  public SMS(String message, String date) {
+	  this.message = message;
 	  try { this.date = Long.parseLong(date); } catch(Exception ex) { ex.printStackTrace(); }
   }
 }

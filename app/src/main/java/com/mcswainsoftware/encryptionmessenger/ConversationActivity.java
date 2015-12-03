@@ -11,9 +11,10 @@ import java.util.*;
 import android.graphics.*;
 import android.database.*;
 import android.provider.*;
+import android.telephony.*;
 
 public class ConversationActivity extends ListActivity {
-    private ArrayList<String> list, dateSent, dateRecv;
+    private ArrayList<String> list = new ArrayList<String>(), dateSent, dateRecv;
     private StableArrayAdapter adapter;
     String longitem;
 
@@ -24,14 +25,24 @@ public class ConversationActivity extends ListActivity {
         Drawable wallpaper = WallpaperManager.getInstance(this).getDrawable();
         wallpaper.setColorFilter(Color.parseColor("#88000000"), PorterDuff.Mode.DARKEN);
         this.getWindow().setBackgroundDrawable(wallpaper);
-
         final ListView listview = (ListView) findViewById(android.R.id.list);
-
-        list = new ArrayList<String>();
-        list = getAllSmsConversations(getIntent().getExtras().getString("number"));
         adapter = new StableArrayAdapter(this,
                                          R.layout.list_item, list);
         listview.setAdapter(adapter);
+        
+        ImageButton btn = (ImageButton)findViewById(R.id.newmsgsend);
+        btn.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View p1){
+                SmsManager smsManager = SmsManager.getDefault();
+                smsManager.sendTextMessage(getIntent().getExtras().getString("number"), null, ((EditText)findViewById(R.id.newmsg)).getText().toString(), null, null);
+                
+                addItem(((EditText)findViewById(R.id.newmsg)).getText().toString(), true);
+                 ((EditText)findViewById(R.id.newmsg)).setText("");
+                }
+        });
+        
+        getAllSmsConversations(getIntent().getExtras().getString("number"));
+        
 
 
 
@@ -92,7 +103,7 @@ public class ConversationActivity extends ListActivity {
     private class StableArrayAdapter extends ArrayAdapter<String> {
 
         HashMap<String, Integer> mIdMap = new HashMap<String, Integer>();
-
+        ArrayList<Boolean> isMe = new ArrayList<Boolean>();
         public StableArrayAdapter(Context context, int textViewResourceId,
                                   List<String> objects) {
             super(context, textViewResourceId, objects);
@@ -128,26 +139,29 @@ public class ConversationActivity extends ListActivity {
             LayoutInflater inflater = (LayoutInflater) ConversationActivity.this.getApplicationContext()
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-            View rowView = inflater.inflate(R.layout.list_item, parent, false);
+            View rowView = inflater.inflate((isMe.get(position)) ? R.layout.list_item_me:R.layout.list_item, parent, false);
             TextView textView = (TextView) rowView.findViewById(R.id.firstLine);
             ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
             textView.setText(list.get(position));
 
             return rowView;
         }
-
+        public void setLastIndexMe(boolean me) {
+            isMe.add(me);
+        }
 
     }
 
-    private void addItem() {
+    private void addItem(String msg, boolean from) {
 
-        list.add("Conversation With Jacob");
+        list.add(msg);
+        adapter.setLastIndexMe(from);
         adapter.notifyDataSetChanged();
 
     }
 
-    public ArrayList<String> getAllSmsConversations(String num) {
-        ArrayList<String> lstSms = new ArrayList<String>();
+    public void getAllSmsConversations(String num) {
+        ArrayList<SMS> lstSms = new ArrayList<SMS>();
         ContentResolver cr = ConversationActivity.this.getContentResolver();
 
         Cursor c = cr.query(Telephony.Sms.Inbox.CONTENT_URI, // Official CONTENT_URI from docs
@@ -156,7 +170,7 @@ public class ConversationActivity extends ListActivity {
                             null,
                             Telephony.Sms.Inbox.DEFAULT_SORT_ORDER); // Default sort order
         Cursor c2 = cr.query(Telephony.Sms.Sent.CONTENT_URI, // Official CONTENT_URI from docs
-                            new String[] { Telephony.Sms.Sent.BODY, Telephony.Sms.Sent.ADDRESS, Telephony.Sms.Sent.DATE_SENT }, // Select body text
+                            new String[] { Telephony.Sms.Sent.BODY, Telephony.Sms.Sent.ADDRESS, Telephony.Sms.Sent.DATE }, // Select body text
                             null,
                             null,
                             Telephony.Sms.Sent.DEFAULT_SORT_ORDER); // Default sort order
@@ -170,8 +184,8 @@ public class ConversationActivity extends ListActivity {
         if (c.moveToFirst()) {
             for (int i = 0; i < totalSMS; i++) {
                 if(c.getString(1).contains(num)) {
-                    lstSms.add(c.getString(0));
-                    dateRecv.add(c.getString(2));
+                    
+                    lstSms.add(new SMS(c.getString(0),c.getString(2), false));
                 }
                 c.moveToNext();
             }
@@ -190,8 +204,7 @@ public class ConversationActivity extends ListActivity {
                 
                 if(trimnum.contains(trimoth)) {
                     
-                    sntSms.add(c2.getString(0));
-                    dateSent.add(c2.getString(2));
+                    lstSms.add(new SMS(c2.getString(0), c2.getString(2), true));
                 }
                 c2.moveToNext();
             }
@@ -199,8 +212,11 @@ public class ConversationActivity extends ListActivity {
             throw new RuntimeException("You have no SMS in Inbox"); 
         }
         c2.close();
-        Collections.reverse(lstSms);
-        return lstSms;
+        Collections.sort(lstSms);
+        for(SMS i: lstSms){
+            addItem(i.message, i.me);
+        }
+        
     }
 
 }

@@ -12,7 +12,7 @@ import android.graphics.*;
 import android.database.*;
 import android.provider.*;
 
-public class MainActivity extends ListActivity {
+public class ConversationActivity extends ListActivity {
     private ArrayList<String> list;
     private StableArrayAdapter adapter;
     String longitem;
@@ -20,7 +20,7 @@ public class MainActivity extends ListActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+        setContentView(R.layout.activity_main);
         Drawable wallpaper = WallpaperManager.getInstance(this).getDrawable();
         wallpaper.setColorFilter(Color.parseColor("#88000000"), PorterDuff.Mode.DARKEN);
         this.getWindow().setBackgroundDrawable(wallpaper);
@@ -28,24 +28,25 @@ public class MainActivity extends ListActivity {
         final ListView listview = (ListView) findViewById(android.R.id.list);
 
         list = new ArrayList<String>();
-
+        list = getAllSmsConversations(getIntent().getExtras().getString("number"));
         adapter = new StableArrayAdapter(this,
-                                         R.layout.conversation_item, getAllSmsConversations());
+                                         R.layout.list_item, list);
         listview.setAdapter(adapter);
-        
 
-        
-        final Dialog dialog = new Dialog(MainActivity.this);
-        dialog.setContentView(R.layout.convolongclick);
+
+
+        final Dialog dialog = new Dialog(ConversationActivity.this);
+        dialog.setContentView(R.layout.longclick);
         dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        
-        TextView deletetxt = (TextView) dialog.findViewById(R.id.deletetxt);
 
+        TextView deletetxt = (TextView) dialog.findViewById(R.id.deletetxt);
+        TextView copytxt = (TextView) dialog.findViewById(R.id.copytxt);
+        
         deletetxt.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     dialog.dismiss();
-                    new AlertDialog.Builder(MainActivity.this)
+                    new AlertDialog.Builder(ConversationActivity.this)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .setTitle(R.string.delete)
                         .setMessage(R.string.really_delete)
@@ -66,7 +67,13 @@ public class MainActivity extends ListActivity {
 
                 }
             });
-
+            
+        copytxt.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+                });
         listview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
 
                 @Override
@@ -79,20 +86,7 @@ public class MainActivity extends ListActivity {
                 }
 
             });
-        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-                @Override
-                public void onItemClick(AdapterView<?> parent, final View view,
-                                               int position, long id) {
-                    longitem = (String) parent.getItemAtPosition(position);
-                           Intent mIntent = new Intent(MainActivity.this, ConversationActivity.class);
-                           Bundle bun = new Bundle();
-                    bun.putString("number", getAllSmsConversations().get(position));
-                    mIntent.putExtras(bun);
-                    MainActivity.this.startActivity(mIntent);
-                }
-
-            });
+        
     }
 
     private class StableArrayAdapter extends ArrayAdapter<String> {
@@ -112,8 +106,8 @@ public class MainActivity extends ListActivity {
         {
             super.notifyDataSetChanged();
             mIdMap.clear();
-            for (int i = 0; i < MainActivity.this.list.size(); ++i) {
-                mIdMap.put(MainActivity.this.list.get(i), i);
+            for (int i = 0; i < ConversationActivity.this.list.size(); ++i) {
+                mIdMap.put(ConversationActivity.this.list.get(i), i);
             }
         }
 
@@ -131,13 +125,13 @@ public class MainActivity extends ListActivity {
         @Override
         public View getView(int position, View convertView, ViewGroup parent)
         {
-            LayoutInflater inflater = (LayoutInflater) MainActivity.this.getApplicationContext()
+            LayoutInflater inflater = (LayoutInflater) ConversationActivity.this.getApplicationContext()
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-            View rowView = inflater.inflate(R.layout.conversation_item, parent, false);
+            View rowView = inflater.inflate(R.layout.list_item, parent, false);
             TextView textView = (TextView) rowView.findViewById(R.id.firstLine);
             ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
-            textView.setText(getAllSmsConversations().get(position));
+            textView.setText(list.get(position));
 
             return rowView;
         }
@@ -146,27 +140,34 @@ public class MainActivity extends ListActivity {
     }
 
     private void addItem() {
-        
-            list.add("Conversation With Jacob");
-            adapter.notifyDataSetChanged();
-        
+
+        list.add("Conversation With Jacob");
+        adapter.notifyDataSetChanged();
+
     }
 
-    public ArrayList<String> getAllSmsConversations() {
+    public ArrayList<String> getAllSmsConversations(String num) {
         ArrayList<String> lstSms = new ArrayList<String>();
-        ContentResolver cr = MainActivity.this.getContentResolver();
+        ContentResolver cr = ConversationActivity.this.getContentResolver();
 
         Cursor c = cr.query(Telephony.Sms.Inbox.CONTENT_URI, // Official CONTENT_URI from docs
-                            new String[] { Telephony.Sms.Inbox.ADDRESS }, // Select body text
+                            new String[] { Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS }, // Select body text
                             null,
                             null,
                             Telephony.Sms.Inbox.DEFAULT_SORT_ORDER); // Default sort order
-
+        Cursor c2 = cr.query(Telephony.Sms.Sent.CONTENT_URI, // Official CONTENT_URI from docs
+                            new String[] { Telephony.Sms.Sent.BODY, Telephony.Sms.Sent.ADDRESS }, // Select body text
+                            null,
+                            null,
+                            Telephony.Sms.Inbox.DEFAULT_SORT_ORDER); // Default sort order
+        
+                            
+                            
         int totalSMS = c.getCount();
 
         if (c.moveToFirst()) {
             for (int i = 0; i < totalSMS; i++) {
-                if(!lstSms.contains((c.getString(0)))) {
+                if(c.getString(1).contains(num)) {
                     lstSms.add(c.getString(0));
                 }
                 c.moveToNext();
@@ -175,6 +176,20 @@ public class MainActivity extends ListActivity {
             throw new RuntimeException("You have no SMS in Inbox"); 
         }
         c.close();
+        int totalSent = c2.getCount();
+
+        if (c2.moveToFirst()) {
+            for (int i = 0; i < totalSent; i++) {
+                if(c2.getString(1).contains(num)) {
+                    lstSms.add(c2.getString(0));
+                }
+                c2.moveToNext();
+            }
+        } else {
+            throw new RuntimeException("You have no SMS in Inbox"); 
+        }
+        c2.close();
+        Collections.reverse(lstSms);
         return lstSms;
     }
 

@@ -13,7 +13,7 @@ import android.database.*;
 import android.provider.*;
 
 public class ConversationActivity extends ListActivity {
-    private ArrayList<String> list;
+    private ArrayList<String> list, dateSent, dateRecv;
     private StableArrayAdapter adapter;
     String longitem;
 
@@ -151,24 +151,27 @@ public class ConversationActivity extends ListActivity {
         ContentResolver cr = ConversationActivity.this.getContentResolver();
 
         Cursor c = cr.query(Telephony.Sms.Inbox.CONTENT_URI, // Official CONTENT_URI from docs
-                            new String[] { Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS }, // Select body text
+                            new String[] { Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS, Telephony.Sms.Inbox.DATE_SENT }, // Select body text
                             null,
                             null,
                             Telephony.Sms.Inbox.DEFAULT_SORT_ORDER); // Default sort order
         Cursor c2 = cr.query(Telephony.Sms.Sent.CONTENT_URI, // Official CONTENT_URI from docs
-                            new String[] { Telephony.Sms.Sent.BODY, Telephony.Sms.Sent.ADDRESS }, // Select body text
+                            new String[] { Telephony.Sms.Sent.BODY, Telephony.Sms.Sent.ADDRESS, Telephony.Sms.Sent.DATE_SENT }, // Select body text
                             null,
                             null,
-                            Telephony.Sms.Inbox.DEFAULT_SORT_ORDER); // Default sort order
+                            Telephony.Sms.Sent.DEFAULT_SORT_ORDER); // Default sort order
         
                             
                             
         int totalSMS = c.getCount();
-
+        dateRecv = new ArrayList<String>();
+        ArrayList<String> sntSms = new ArrayList<String>();
+        dateSent = new ArrayList<String>();
         if (c.moveToFirst()) {
             for (int i = 0; i < totalSMS; i++) {
                 if(c.getString(1).contains(num)) {
                     lstSms.add(c.getString(0));
+                    dateRecv.add(c.getString(2));
                 }
                 c.moveToNext();
             }
@@ -180,8 +183,15 @@ public class ConversationActivity extends ListActivity {
 
         if (c2.moveToFirst()) {
             for (int i = 0; i < totalSent; i++) {
-                if(c2.getString(1).contains(num)) {
-                    lstSms.add(c2.getString(0));
+                String trimnum = c2.getString(1).replaceAll("\\D+","").trim();
+                if(trimnum.charAt(0) == '1') trimnum=trimnum.substring(1).trim();
+                String trimoth = num.replaceAll("\\D+","").trim();
+                if(trimoth.charAt(0) == '1') trimoth=trimoth.substring(1).trim();
+                
+                if(trimnum.contains(trimoth)) {
+                    
+                    sntSms.add(c2.getString(0));
+                    dateSent.add(c2.getString(2));
                 }
                 c2.moveToNext();
             }

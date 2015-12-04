@@ -143,17 +143,21 @@ public class MainActivity extends ListActivity {
 			}, null, null, null);
 			boolean goof = false;
 			String name = "";
-			String uri = "";
+			String uri2 = "";
 			if (c.moveToFirst()) {
 				goof = true;
 				name = c.getString(0);
-				uri = c.getString(1);
+				uri2 = c.getString(1);
 				c.moveToNext();
 			}
 			textView.setText((!goof) ? getAllSmsConversations().get(position) : name);
-			Uri imgUri = Uri.parse(uri);
-			imageView.setImageURI(null);
-			imageView.setImageURI(imgUri);
+			if(goof) {
+                Uri imgUri = Uri.parse(uri2);
+                imageView.setImageURI(null);
+                imageView.setImageURI(imgUri);
+            }
+            
+            
 
 			c.close();
 			return rowView;

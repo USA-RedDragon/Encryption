@@ -26,10 +26,20 @@ PendingIntent resultPendingIntent =
 // This sets the pending intent that should be fired when the user clicks the
 // notification. Clicking the notification launches a new activity.
 builder.setContentIntent(resultPendingIntent);
+Intent dismissIntent = new Intent(this, QuickReplyActivity.class);
+dismissIntent.setAction(Intent.ACTION_VIEW);
+PendingIntent piDismiss = PendingIntent.getService(this, 0, dismissIntent, 0);
 
           for(SmsMessage i : messages) {
-             System.out.println("MCSWAIN: MESSAGE BODY: " + i.getMessageBody());
-              System.out.println("MCSWAIN: MESSAGE FROM: "+ i.getOriginatingAddress());
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
+        .setSmallIcon(R.drawable.ic_stat_notification)
+        .setContentTitle(Utilities.getContactName(context));
+        .setContentText(i.getMessageBody())
+        .setDefaults(Notification.DEFAULT_ALL) // requires VIBRATE permission
+        .setStyle(new NotificationCompat.BigTextStyle()
+                .bigText(msg))
+        .addAction (R.drawable.ic_stat_dismiss,
+                getString(R.string.dismiss), piDismiss);
           }
     }
 }

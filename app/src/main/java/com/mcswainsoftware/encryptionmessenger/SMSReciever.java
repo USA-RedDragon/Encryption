@@ -47,7 +47,7 @@ PendingIntent piDismiss = PendingIntent.getActivity(context, 0, dismissIntent, 0
         .setStyle(new Notification.BigTextStyle()
                 .bigText(i.getDisplayMessageBody()))
         .addAction (R.drawable.ic_send_white_18dp,
-                context.getString(R.string.delete), piDismiss);
+                context.getString(R.string.reply), piDismiss);
                 NotificationManager nM=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
                 nM.notify(001, builder.build());
           }

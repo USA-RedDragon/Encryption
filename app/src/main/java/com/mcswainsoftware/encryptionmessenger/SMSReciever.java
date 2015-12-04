@@ -11,6 +11,7 @@ public class SMSReciever extends BroadcastReceiver {
           System.out.println("MCSWAIN: Recieved SMS");    
           for(SmsMessage i : messages) {
              System.out.println("MCSWAIN: MESSAGE BODY: " + i.getMessageBody());
+              System.out.println("MCSWAIN: MESSAGE FROM: "+ i.getOriginatingAddress());
           }
     }
 }

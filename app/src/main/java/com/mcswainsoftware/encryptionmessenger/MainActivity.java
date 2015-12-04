@@ -11,6 +11,7 @@ import java.util.*;
 import android.graphics.*;
 import android.database.*;
 import android.provider.*;
+import android.net.*;
 
 public class MainActivity extends ListActivity {
     private ArrayList<String> list;
@@ -137,8 +138,19 @@ public class MainActivity extends ListActivity {
             View rowView = inflater.inflate(R.layout.conversation_item, parent, false);
             TextView textView = (TextView) rowView.findViewById(R.id.firstLine);
             ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
-            textView.setText(getAllSmsConversations().get(position));
-
+            
+            
+            Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(getAllSmsConversations().get(position)));
+            Cursor c = MainActivity.this.getContentResolver().query(uri, new String[]{ContactsContract.PhoneLookup.DISPLAY_NAME, ContactsContract.PhoneLookup.PHOTO_THUMBNAIL_URI}, null, null,null); 
+            boolean goof=false;
+            String name="";
+            if (c.moveToFirst()) {
+                goof=true;
+                name=c.getString(0);
+                    c.moveToNext();
+                }
+            textView.setText((!goof) ? getAllSmsConversations().get(position):name);
+            c.close();
             return rowView;
         }
 

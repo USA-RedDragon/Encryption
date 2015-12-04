@@ -81,6 +81,9 @@ public class ConversationActivity extends ListActivity {
 		copytxt.setOnClickListener(new View.OnClickListener() {@Override
 			public void onClick(View v) {
 				dialog.dismiss();
+				ClipData cpy = ClipData.newPlainText("text", ((TextView)v).getText());
+				ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+				clipboard.setPrimaryClip(cpy);
 			}
 		});
 		listview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {

@@ -30,16 +30,21 @@ public class ConversationActivity extends ListActivity {
 		adapter = new StableArrayAdapter(this,
 		R.layout.list_item, list);
 		listview.setAdapter(adapter);
-    
+    	if(getIntent().getExtras().getBoolean("fromNot", false)){
+			markMessageRead(this, getIntent().getExtras().getString("fullnum"), getIntent().getExtras().getString("fullbody"));
+			
+		}
         
 		ImageButton btn = (ImageButton) findViewById(R.id.newmsgsend);
 		btn.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View p1) {
+				if(!((EditText) findViewById(R.id.newmsg)).getText().toString().trim().isEmpty()) {
 				SmsManager smsManager = SmsManager.getDefault();
 				smsManager.sendTextMessage(getIntent().getExtras().getString("number"), null, ((EditText) findViewById(R.id.newmsg)).getText().toString(), null, null);
 
 				addItem(((EditText) findViewById(R.id.newmsg)).getText().toString(), true);
 				((EditText) findViewById(R.id.newmsg)).setText("");
+				}
 			}
 		});
 
@@ -195,7 +200,7 @@ public class ConversationActivity extends ListActivity {
 
 		Cursor c = cr.query(Telephony.Sms.Inbox.CONTENT_URI, // Official CONTENT_URI from docs
 		new String[] {
-			Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS, Telephony.Sms.Inbox.DATE_SENT
+			Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS, Telephony.Sms.Inbox.DATE
 		}, // Select body text
 		null,
 		null,
@@ -217,7 +222,7 @@ public class ConversationActivity extends ListActivity {
 		if (c.moveToFirst()) {
 			for (int i = 0; i < totalSMS; i++) {
 				if (c.getString(1).contains(num)) {
-
+					
 					lstSms.add(new SMS(c.getString(0), c.getString(2), false));
 				}
 				c.moveToNext();
@@ -236,7 +241,7 @@ public class ConversationActivity extends ListActivity {
 				if (trimoth.charAt(0) == '1') trimoth = trimoth.substring(1).trim();
 
 				if (trimnum.contains(trimoth)) {
-
+					
 					lstSms.add(new SMS(c2.getString(0), c2.getString(2), true));
 				}
 				c2.moveToNext();
@@ -300,4 +305,26 @@ public class ConversationActivity extends ListActivity {
                           new Rect(0, 0, targetWidth, targetHeight), null);
         return targetBitmap;
     }
+	
+	private void markMessageRead(Context context, String number, String body) {
+		Uri uri = Uri.parse("content://sms/inbox");
+		Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+		try{
+
+            while (cursor.moveToNext()) {
+				if ((cursor.getString(cursor.getColumnIndex("address")).equals(number)) && (cursor.getInt(cursor.getColumnIndex("read")) == 0)) {
+					if (cursor.getString(cursor.getColumnIndex("body")).startsWith(body)) {
+						String SmsMessageId = cursor.getString(cursor.getColumnIndex("_id"));
+						ContentValues values = new ContentValues();
+						values.put("read", true);
+						context.getContentResolver().update(Uri.parse("content://sms/inbox"), values, "_id=" + SmsMessageId, null);
+						return;
+					}
+				}
+			}
+		}catch(Exception e)
+		{
+			Log.e("Mark Read", "Error in Read: "+e.toString());
+		}
+	}
 }

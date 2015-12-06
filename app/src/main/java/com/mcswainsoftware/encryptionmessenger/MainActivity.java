@@ -19,7 +19,7 @@ public class MainActivity extends ListActivity {
 	private ArrayList < String > list;
 	private StableArrayAdapter adapter;
 	String longitem, phoneNo;
-
+	ListView listview;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -38,8 +38,8 @@ public class MainActivity extends ListActivity {
                 }
             });
         addButton.setClipToOutline(true);
-		final ListView listview = (ListView) findViewById(android.R.id.list);
-
+		listview = (ListView) findViewById(android.R.id.list);
+listview.setTranscriptMode(ListView.TRANSCRIPT_MODE_DISABLED);
 		list = new ArrayList < String > ();
 
 		adapter = new StableArrayAdapter(this,

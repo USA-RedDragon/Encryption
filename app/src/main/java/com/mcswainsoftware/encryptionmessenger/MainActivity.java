@@ -27,7 +27,26 @@ public class MainActivity extends ListActivity {
 		Drawable wallpaper = WallpaperManager.getInstance(this).getDrawable();
 		wallpaper.setColorFilter(Color.parseColor("#88000000"), PorterDuff.Mode.DARKEN);
 		this.getWindow().setBackgroundDrawable(wallpaper);
-        
+        final String myPackageName = getPackageName();
+		Toast.makeText(this, Telephony.Sms.getDefaultSmsPackage(this) + "     "+myPackageName, Toast.LENGTH_LONG).show();
+        if (!Telephony.Sms.getDefaultSmsPackage(this).equals(myPackageName)) {
+            // App is not default.
+            // Show the "not currently set as the default SMS app" interface
+            
+            // Set up a button that allows the user to change the default SMS app
+            Bundle bun = new Bundle();
+			bun.putString(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, 
+							myPackageName);
+			Intent intent =
+		
+                            new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+						
+						intent.putExtras(bun);	
+						startActivity(intent);
+					
+		
+        }
+    
         View addButton = findViewById(R.id.add_button);
         addButton.setOutlineProvider(new ViewOutlineProvider() {
                 
@@ -65,6 +84,7 @@ fab.setOnClickListener(new View.OnClickListener(){
 		deletetxt.setOnClickListener(new View.OnClickListener() {@Override
 			public void onClick(View v) {
 				dialog.dismiss();
+				Toast.makeText(MainActivity.this, "Not yet implemented", Toast.LENGTH_LONG).show();
 				new AlertDialog.Builder(MainActivity.this)
 					.setIcon(android.R.drawable.ic_dialog_alert)
 					.setTitle(R.string.delete)
@@ -79,8 +99,8 @@ fab.setOnClickListener(new View.OnClickListener(){
 					}
 
 				})
-					.setNegativeButton(R.string.no, null)
-					.show();
+					.setNegativeButton(R.string.no, null);
+					//.show();
 
 
 
@@ -188,7 +208,14 @@ fab.setOnClickListener(new View.OnClickListener(){
 			TextView textView = (TextView) rowView.findViewById(R.id.firstLine);
 			ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
 
-
+			String pre = Utilities.getLastSms(MainActivity.this, getAllSmsConversations().get(position));
+			pre = pre.subSequence(0,Math.min(pre.length(),50)).toString();
+			
+			if(pre.length() == 50) {
+				pre=pre+"...";
+			}
+			TextView tv = (TextView) rowView.findViewById(R.id.secondLine);
+			tv.setText(pre);
 			Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(getAllSmsConversations().get(position)));
 			Cursor c = MainActivity.this.getContentResolver().query(uri, new String[] {
 				ContactsContract.PhoneLookup.DISPLAY_NAME, ContactsContract.PhoneLookup.PHOTO_THUMBNAIL_URI

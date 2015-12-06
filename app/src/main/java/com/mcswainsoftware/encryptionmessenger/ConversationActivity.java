@@ -23,6 +23,7 @@ public class ConversationActivity extends ListActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		this.getActionBar().setTitle(Utilities.getContactName(this, getIntent().getExtras().getString("number")) + " <"+ getIntent().getExtras().getString("number") +">");
 		Drawable wallpaper = WallpaperManager.getInstance(this).getDrawable();
 		wallpaper.setColorFilter(Color.parseColor("#88000000"), PorterDuff.Mode.DARKEN);
 		this.getWindow().setBackgroundDrawable(wallpaper);
@@ -63,6 +64,7 @@ public class ConversationActivity extends ListActivity {
 		deletetxt.setOnClickListener(new View.OnClickListener() {@Override
 			public void onClick(View v) {
 				dialog.dismiss();
+				Toast.makeText(ConversationActivity.this, "Not yet implemented", Toast.LENGTH_LONG).show();
 				new AlertDialog.Builder(ConversationActivity.this)
 					.setIcon(android.R.drawable.ic_dialog_alert)
 					.setTitle(R.string.delete)
@@ -71,15 +73,15 @@ public class ConversationActivity extends ListActivity {
 
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
-                        deleteSMS(ConversationActivity.this, longitem, ConversationActivity.this.getIntent().getExtras().getString("number"));
-                        Toast.makeText(ConversationActivity.this, getIntent().getExtras().getString("number"), Toast.LENGTH_LONG).show();
-						list.remove(longitem);
-						adapter.notifyDataSetChanged();
+                        //deleteSMS(ConversationActivity.this, longitem, ConversationActivity.this.getIntent().getExtras().getString("number"));
+                        
+						//list.remove(longitem);
+						//adapter.notifyDataSetChanged();
 					}
 
 				})
-					.setNegativeButton(R.string.no, null)
-					.show();
+					.setNegativeButton(R.string.no, null);
+					//.show();
 
 
 
@@ -332,11 +334,11 @@ public class ConversationActivity extends ListActivity {
     
     public void deleteSMS(Context context, String message, String number) {
         try {
-            Uri uriSms = Uri.parse("content://sms/inbox");
+            Uri uriSms = Uri.parse("content://sms/conversations");
             Cursor c = context.getContentResolver().query(
                 uriSms,
-                new String[] { "_id", "thread_id", "address", "person",
-                    "date", "body" }, "read=0", null, null);
+                new String[] { "_id as _id", "thread_id", "address as address", "person as person",
+                    "date as date", "body as body" }, null, null, null);
 
             if (c != null && c.moveToFirst()) {
                 do {
@@ -345,24 +347,19 @@ public class ConversationActivity extends ListActivity {
                     String address = c.getString(2);
                     String body = c.getString(5);
                     String date = c.getString(3);
-                    Log.e("log>>>",
-                          "0>" + c.getString(0) + "1>" + c.getString(1)
-                          + "2>" + c.getString(2) + "<-1>"
-                          + c.getString(3) + "4>" + c.getString(4)
-                          + "5>" + c.getString(5));
-                    Log.e("log>>>", "date" + c.getString(0));
+                    
 
-                    if (message.equals(body) && address.equals(number)) {
+                    if (message.contains(body) && address.contains(number)) {
                         // mLogger.logInfo("Deleting SMS with id: " + threadId);
                         context.getContentResolver().delete(
-                            Uri.parse("content://sms/" + id), "date=?",
+                            Uri.parse("content://sms/conversations/" + id), "date=?",
                             new String[] { c.getString(4) });
-                        Log.e("log>>>", "Delete success.........");
+                        Toast.makeText(ConversationActivity.this,"Delete success.........",Toast.LENGTH_LONG).show();
                     }
                 } while (c.moveToNext());
             }
         } catch (Exception e) {
-            Log.e("log>>>", e.toString());
+            Toast.makeText(ConversationActivity.this, e.toString(), Toast.LENGTH_LONG).show();
         }
     }
 }

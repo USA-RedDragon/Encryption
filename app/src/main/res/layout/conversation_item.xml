@@ -13,8 +13,7 @@
 		android:layout_alignParentTop="true"
 		android:layout_marginRight="12dip"
 		android:contentDescription="TODO"
-		android:src="@drawable/ic_perm_identity_48px"
-		/>
+		android:src="@drawable/ic_perm_identity_48px"/>
 
 	<TextView
 		android:id="@+id/firstLine"
@@ -26,8 +25,17 @@
 		android:layout_toRightOf="@id/icon"
 		android:gravity="center_vertical"
 		android:text="Example application"
-		android:textSize="20sp"
-		/>
+		android:textSize="20sp"/>
+
+	<TextView
+		android:id="@+id/secondLine"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_toRightOf="@id/icon"
+		android:text="Last Message"
+		android:textSize="16sp"
+		android:layout_centerVertical="true"
+		android:paddingTop="30dp"/>
 
 </RelativeLayout>
 

@@ -193,13 +193,13 @@ public class ConversationActivity extends ListActivity {
 		ArrayList < SMS > lstSms = new ArrayList < SMS > ();
 		ContentResolver cr = ConversationActivity.this.getContentResolver();
 
-		Cursor c = cr.query(Telephony.Sms.Conversations.CONTENT_URI, // Official CONTENT_URI from docs
+		Cursor c = cr.query(Telephony.Sms.Inbox.CONTENT_URI, // Official CONTENT_URI from docs
 		new String[] {
-			Telephony.Sms.Conversations.BODY, Telephony.Sms.Conversations.ADDRESS, Telephony.Sms.Conversations.DATE_SENT
+			Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS, Telephony.Sms.Inbox.DATE_SENT
 		}, // Select body text
 		null,
 		null,
-		Telephony.Sms.Conversations.DEFAULT_SORT_ORDER); // Default sort order
+		Telephony.Sms.Inbox.DEFAULT_SORT_ORDER); // Default sort order
 		Cursor c2 = cr.query(Telephony.Sms.Sent.CONTENT_URI, // Official CONTENT_URI from docs
 		new String[] {
 			Telephony.Sms.Sent.BODY, Telephony.Sms.Sent.ADDRESS, Telephony.Sms.Sent.DATE

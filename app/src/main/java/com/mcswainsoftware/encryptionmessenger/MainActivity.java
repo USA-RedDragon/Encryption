@@ -11,12 +11,14 @@ import java.util.*;
 import android.graphics.*;
 import android.database.*;
 import android.provider.*;
-import android.net.*;
+import android.net.Uri;
+import java.io.*;
+import java.net.*;
 
 public class MainActivity extends ListActivity {
 	private ArrayList < String > list;
 	private StableArrayAdapter adapter;
-	String longitem;
+	String longitem, phoneNo;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +27,17 @@ public class MainActivity extends ListActivity {
 		Drawable wallpaper = WallpaperManager.getInstance(this).getDrawable();
 		wallpaper.setColorFilter(Color.parseColor("#88000000"), PorterDuff.Mode.DARKEN);
 		this.getWindow().setBackgroundDrawable(wallpaper);
-
+        
+        View addButton = findViewById(R.id.add_button);
+        addButton.setOutlineProvider(new ViewOutlineProvider() {
+                
+                @Override
+                public void getOutline(View view, Outline outline) {
+                    int diameter = getResources().getDimensionPixelSize(R.dimen.diameter);
+                    outline.setOval(0, 0, diameter, diameter);
+                }
+            });
+        addButton.setClipToOutline(true);
 		final ListView listview = (ListView) findViewById(android.R.id.list);
 
 		list = new ArrayList < String > ();
@@ -35,7 +47,15 @@ public class MainActivity extends ListActivity {
 		listview.setAdapter(adapter);
 
 
-
+ImageView fab = (ImageView) findViewById(R.id.add_button);
+fab.setOnClickListener(new View.OnClickListener(){
+    public void onClick(View v){
+        Intent pickContactIntent = new Intent( Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI );
+        pickContactIntent.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
+        startActivityForResult(pickContactIntent, 1337);
+        
+    }
+});
 		final Dialog dialog = new Dialog(MainActivity.this);
 		dialog.setContentView(R.layout.convolongclick);
 		dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
@@ -95,6 +115,38 @@ public class MainActivity extends ListActivity {
 		});
 	}
 
+    @Override
+    protected void onResume()
+    {
+        list=getAllSmsConversations();
+        adapter.notifyDataSetChanged();
+        super.onResume();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        //Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);  startActivityForResult(intent, 1);
+
+        if(data != null){
+        Uri uri = data.getData();
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        cursor.moveToFirst();
+
+        int  phoneIndex =cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+        phoneNo = cursor.getString(phoneIndex);
+            Intent mIntent = new Intent(MainActivity.this, ConversationActivity.class);
+            Bundle bun = new Bundle();
+            bun.putString("number", phoneNo);
+            mIntent.putExtras(bun);
+            MainActivity.this.startActivity(mIntent);
+        } else {
+            phoneNo = "";
+        }
+        
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
 	private class StableArrayAdapter extends ArrayAdapter < String > {
 
 		HashMap < String, Integer > mIdMap = new HashMap < String, Integer > ();
@@ -152,9 +204,12 @@ public class MainActivity extends ListActivity {
 			}
 			textView.setText((!goof) ? getAllSmsConversations().get(position) : name);
 			if(goof) {
-                Uri imgUri = Uri.parse(uri2);
+                 
+                Uri urii = Uri.parse(uri2);
                 imageView.setImageURI(null);
-                imageView.setImageURI(imgUri);
+                try{
+                imageView.setImageBitmap(getRoundedShape(MediaStore.Images.Media.getBitmap(getContentResolver(), urii)));
+                } catch(Exception x){}
             }
             
             
@@ -169,6 +224,7 @@ public class MainActivity extends ListActivity {
 	private void addItem() {
 
 		list.add("Conversation With Jacob");
+        
 		adapter.notifyDataSetChanged();
 
 	}
@@ -177,7 +233,7 @@ public class MainActivity extends ListActivity {
 		ArrayList < String > lstSms = new ArrayList < String > ();
 		ContentResolver cr = MainActivity.this.getContentResolver();
 
-		Cursor c = cr.query(Telephony.Sms.Inbox.CONTENT_URI, // Official CONTENT_URI from docs
+		/*Cursor c = cr.query(Telephony.Sms.Inbox.CONTENT_URI, // Official CONTENT_URI from docs
 		new String[] {
 			Telephony.Sms.Inbox.ADDRESS
 		}, // Select body text
@@ -197,8 +253,53 @@ public class MainActivity extends ListActivity {
 		} else {
 			throw new RuntimeException("You have no SMS in Inbox");
 		}
+        c.close();*/
+        Cursor c = cr.query(Telephony.Sms.Conversations.CONTENT_URI, // Official CONTENT_URI from docs
+                            new String[] {
+                                Telephony.Sms.Conversations.ADDRESS+ " as " +Telephony.Sms.Conversations.ADDRESS
+                            }, // Select body text
+                            null,
+                            null,
+                            Telephony.Sms.Conversations.DEFAULT_SORT_ORDER); // Default sort order
+        int totalSMS = c.getCount();
+            if (c.moveToFirst()) {
+            for (int i = 0; i < totalSMS; i++) {
+                if (!lstSms.contains((c.getString(0)))) {
+                   // if(!lstSms.contains(c.getString(0)))
+                    lstSms.add(c.getString(0));
+                }
+                c.moveToNext();
+            }
+        } else {
+            throw new RuntimeException("You have no SMS in Inbox");
+		}
 		c.close();
 		return lstSms;
 	}
+    
+    public Bitmap getRoundedShape(Bitmap scaleBitmapImage) {
+        int targetWidth = scaleBitmapImage.getWidth();
+        int targetHeight = scaleBitmapImage.getHeight();
+        Bitmap targetBitmap = Bitmap.createBitmap(targetWidth, 
+                                                  targetHeight,Bitmap.Config.ARGB_8888);
+
+        Canvas canvas = new Canvas(targetBitmap);
+        Path path = new Path();
+        path.addCircle(((float) targetWidth - 1) / 2,
+                       ((float) targetHeight - 1) / 2,
+                       (Math.min(((float) targetWidth), 
+                                 ((float) targetHeight)) / 2),
+                       Path.Direction.CCW);
+
+        canvas.clipPath(path);
+        Bitmap sourceBitmap = scaleBitmapImage;
+        canvas.drawBitmap(sourceBitmap, 
+                          new Rect(0, 0, sourceBitmap.getWidth(),
+                                   sourceBitmap.getHeight()), 
+                          new Rect(0, 0, targetWidth, targetHeight), null);
+        return targetBitmap;
+    }
+    
+    
 
 }

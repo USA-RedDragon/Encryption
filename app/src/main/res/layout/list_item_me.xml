@@ -21,13 +21,14 @@
 
 	<ImageView
 		android:id="@+id/icon"
-		android:layout_width="wrap_content"
-		android:layout_height="fill_parent"
+		android:layout_width="60dp"
+		android:layout_height="60dp"
 		android:layout_alignParentTop="true"
 		android:layout_marginLeft="6dip"
 		android:contentDescription="TODO"
-		android:src="@mipmap/ic_launcher"
-		android:layout_alignParentEnd="true"/>
+		android:src="@drawable/ic_perm_identity_48px"
+		android:layout_alignParentEnd="true"
+		android:padding="10dp"/>
 
 </RelativeLayout>
 

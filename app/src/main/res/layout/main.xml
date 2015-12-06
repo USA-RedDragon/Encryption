@@ -10,7 +10,23 @@
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 		android:transcriptMode="alwaysScroll"
-		android:divider="#00000000"/>
+		android:divider="#47000000"
+		android:dividerHeight="5dp"
+		android:background="#47000000"/>
+
+	<ImageButton
+		android:elevation="5dp"
+		android:tint="@android:color/white"
+		android:background="@drawable/oval"
+		android:id="@+id/add_button"
+		android:layout_width="@dimen/diameter"
+		android:layout_height="@dimen/diameter"
+		android:layout_marginBottom="16dp"
+		android:stateListAnimator="@anim/button_elevation"
+		android:layout_marginEnd="16dp"
+		android:src="@android:drawable/ic_input_add"
+		android:layout_alignParentEnd="true"
+		android:layout_alignParentBottom="true"/>
 
 </RelativeLayout>
 

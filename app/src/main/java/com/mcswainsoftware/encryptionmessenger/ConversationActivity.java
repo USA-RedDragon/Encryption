@@ -12,12 +12,13 @@ import android.graphics.*;
 import android.database.*;
 import android.provider.*;
 import android.telephony.*;
+import android.net.*;
 
 public class ConversationActivity extends ListActivity {
 	private ArrayList < String > list = new ArrayList < String > (), dateSent, dateRecv;
 	private StableArrayAdapter adapter;
 	String longitem;
-
+    String number;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -29,7 +30,8 @@ public class ConversationActivity extends ListActivity {
 		adapter = new StableArrayAdapter(this,
 		R.layout.list_item, list);
 		listview.setAdapter(adapter);
-
+    
+        
 		ImageButton btn = (ImageButton) findViewById(R.id.newmsgsend);
 		btn.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View p1) {
@@ -81,7 +83,7 @@ public class ConversationActivity extends ListActivity {
 		copytxt.setOnClickListener(new View.OnClickListener() {@Override
 			public void onClick(View v) {
 				dialog.dismiss();
-				ClipData cpy = ClipData.newPlainText("text", ((TextView)v).getText());
+				ClipData cpy = ClipData.newPlainText("text", longitem);
 				ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
 				clipboard.setPrimaryClip(cpy);
 			}
@@ -141,6 +143,34 @@ public class ConversationActivity extends ListActivity {
 			View rowView = inflater.inflate((isMe.get(position)) ? R.layout.list_item_me : R.layout.list_item, parent, false);
 			TextView textView = (TextView) rowView.findViewById(R.id.firstLine);
 			ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
+            
+            Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, ConversationActivity.this.getIntent().getExtras().getString("number"));
+            Cursor c = ConversationActivity.this.getContentResolver().query(uri, new String[] {
+                                                                        ContactsContract.PhoneLookup.DISPLAY_NAME, ContactsContract.PhoneLookup.PHOTO_THUMBNAIL_URI
+                                                                    }, null, null, null);
+            boolean goof = false;
+            String name = "";
+            String uri2 = "";
+            if (c.moveToFirst()) {
+                goof = true;
+                name = c.getString(0);
+                uri2 = c.getString(1);
+                c.moveToNext();
+            }
+            
+            if(goof) {
+                if(imageView.getContentDescription().toString().contains("Him")){
+                Uri urii = Uri.parse(uri2);
+                imageView.setImageURI(null);
+                try{
+                    imageView.setImageBitmap(getRoundedShape(MediaStore.Images.Media.getBitmap(getContentResolver(), urii)));
+                } catch(Exception x){}
+                }
+            }
+
+
+
+			c.close();
 			textView.setText(list.get(position));
 
 			return rowView;
@@ -163,13 +193,13 @@ public class ConversationActivity extends ListActivity {
 		ArrayList < SMS > lstSms = new ArrayList < SMS > ();
 		ContentResolver cr = ConversationActivity.this.getContentResolver();
 
-		Cursor c = cr.query(Telephony.Sms.Inbox.CONTENT_URI, // Official CONTENT_URI from docs
+		Cursor c = cr.query(Telephony.Sms.Conversations.CONTENT_URI, // Official CONTENT_URI from docs
 		new String[] {
-			Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS, Telephony.Sms.Inbox.DATE_SENT
+			Telephony.Sms.Conversations.BODY, Telephony.Sms.Conversations.ADDRESS, Telephony.Sms.Conversations.DATE_SENT
 		}, // Select body text
 		null,
 		null,
-		Telephony.Sms.Inbox.DEFAULT_SORT_ORDER); // Default sort order
+		Telephony.Sms.Conversations.DEFAULT_SORT_ORDER); // Default sort order
 		Cursor c2 = cr.query(Telephony.Sms.Sent.CONTENT_URI, // Official CONTENT_URI from docs
 		new String[] {
 			Telephony.Sms.Sent.BODY, Telephony.Sms.Sent.ADDRESS, Telephony.Sms.Sent.DATE
@@ -221,5 +251,53 @@ public class ConversationActivity extends ListActivity {
 		}
 
 	}
+    public ArrayList < String > getAllSmsConversations() {
+        ArrayList < String > lstSms = new ArrayList < String > ();
+        ContentResolver cr = ConversationActivity.this.getContentResolver();
 
+        Cursor c = cr.query(Telephony.Sms.Inbox.CONTENT_URI, // Official CONTENT_URI from docs
+                            new String[] {
+                                Telephony.Sms.Inbox.ADDRESS
+                            }, // Select body text
+                            null,
+                            null,
+                            Telephony.Sms.Inbox.DEFAULT_SORT_ORDER); // Default sort order
+
+        int totalSMS = c.getCount();
+
+        if (c.moveToFirst()) {
+            for (int i = 0; i < totalSMS; i++) {
+                if (!lstSms.contains((c.getString(0)))) {
+                    lstSms.add(c.getString(0));
+                }
+                c.moveToNext();
+            }
+        } else {
+            throw new RuntimeException("You have no SMS in Inbox");
+        }
+        c.close();
+        return lstSms;
+	}
+    public Bitmap getRoundedShape(Bitmap scaleBitmapImage) {
+        int targetWidth = scaleBitmapImage.getWidth()-15;
+        int targetHeight = scaleBitmapImage.getHeight()-15;
+        Bitmap targetBitmap = Bitmap.createBitmap(targetWidth, 
+                                                  targetHeight,Bitmap.Config.ARGB_8888);
+
+        Canvas canvas = new Canvas(targetBitmap);
+        Path path = new Path();
+        path.addCircle(((float) targetWidth - 1) / 2,
+                       ((float) targetHeight - 1) / 2,
+                       (Math.min(((float) targetWidth), 
+                                 ((float) targetHeight)) / 2),
+                       Path.Direction.CCW);
+
+        canvas.clipPath(path);
+        Bitmap sourceBitmap = scaleBitmapImage;
+        canvas.drawBitmap(sourceBitmap, 
+                          new Rect(0, 0, sourceBitmap.getWidth(),
+                                   sourceBitmap.getHeight()), 
+                          new Rect(0, 0, targetWidth, targetHeight), null);
+        return targetBitmap;
+    }
 }

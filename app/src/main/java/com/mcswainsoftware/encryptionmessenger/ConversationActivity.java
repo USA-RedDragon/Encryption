@@ -71,7 +71,8 @@ public class ConversationActivity extends ListActivity {
 
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
-
+                        deleteSMS(ConversationActivity.this, longitem, ConversationActivity.this.getIntent().getExtras().getString("number"));
+                        Toast.makeText(ConversationActivity.this, getIntent().getExtras().getString("number"), Toast.LENGTH_LONG).show();
 						list.remove(longitem);
 						adapter.notifyDataSetChanged();
 					}
@@ -99,6 +100,7 @@ public class ConversationActivity extends ListActivity {
 			public boolean onItemLongClick(AdapterView <? > parent, final View view,
 			int position, long id) {
 				longitem = (String) parent.getItemAtPosition(position);
+    
 				dialog.show();
 
 				return true;
@@ -327,4 +329,40 @@ public class ConversationActivity extends ListActivity {
 			Log.e("Mark Read", "Error in Read: "+e.toString());
 		}
 	}
+    
+    public void deleteSMS(Context context, String message, String number) {
+        try {
+            Uri uriSms = Uri.parse("content://sms/inbox");
+            Cursor c = context.getContentResolver().query(
+                uriSms,
+                new String[] { "_id", "thread_id", "address", "person",
+                    "date", "body" }, "read=0", null, null);
+
+            if (c != null && c.moveToFirst()) {
+                do {
+                    long id = c.getLong(0);
+                    long threadId = c.getLong(1);
+                    String address = c.getString(2);
+                    String body = c.getString(5);
+                    String date = c.getString(3);
+                    Log.e("log>>>",
+                          "0>" + c.getString(0) + "1>" + c.getString(1)
+                          + "2>" + c.getString(2) + "<-1>"
+                          + c.getString(3) + "4>" + c.getString(4)
+                          + "5>" + c.getString(5));
+                    Log.e("log>>>", "date" + c.getString(0));
+
+                    if (message.equals(body) && address.equals(number)) {
+                        // mLogger.logInfo("Deleting SMS with id: " + threadId);
+                        context.getContentResolver().delete(
+                            Uri.parse("content://sms/" + id), "date=?",
+                            new String[] { c.getString(4) });
+                        Log.e("log>>>", "Delete success.........");
+                    }
+                } while (c.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e("log>>>", e.toString());
+        }
+    }
 }

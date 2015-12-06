@@ -27,7 +27,7 @@ public class MainActivity extends ListActivity {
 		Drawable wallpaper = WallpaperManager.getInstance(this).getDrawable();
 		wallpaper.setColorFilter(Color.parseColor("#88000000"), PorterDuff.Mode.DARKEN);
 		this.getWindow().setBackgroundDrawable(wallpaper);
-        final String myPackageName = getPackageName();
+        /*final String myPackageName = getPackageName();
 		Toast.makeText(this, Telephony.Sms.getDefaultSmsPackage(this) + "     "+myPackageName, Toast.LENGTH_LONG).show();
         if (!Telephony.Sms.getDefaultSmsPackage(this).equals(myPackageName)) {
             // App is not default.
@@ -45,7 +45,7 @@ public class MainActivity extends ListActivity {
 						startActivity(intent);
 					
 		
-        }
+        }*/
     
         View addButton = findViewById(R.id.add_button);
         addButton.setOutlineProvider(new ViewOutlineProvider() {

@@ -5,6 +5,8 @@ import android.widget.*;
 import android.view.*;
 import android.telephony.*;
 import android.provider.*;
+import android.content.*;
+import android.view.inputmethod.*;
 
 public class QuickReplyActivity extends Activity
 {
@@ -16,6 +18,10 @@ public class QuickReplyActivity extends Activity
 		getActionBar().hide();
 		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		nm.cancel(001);
+		((EditText) findViewById(R.id.newmsg)).requestFocus();
+		
+		InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+		imm.showSoftInput(((EditText) findViewById(R.id.newmsg)), InputMethodManager.SHOW_FORCED);
 		((TextView)findViewById(R.id.label)).setText("Reply To " + Utilities.getContactName(this, getIntent().getExtras().getString("number")) + " <"+ getIntent().getExtras().getString("number") +">");
 		ImageButton btn = (ImageButton) findViewById(R.id.newmsgsend);
 		btn.setOnClickListener(new View.OnClickListener() {
